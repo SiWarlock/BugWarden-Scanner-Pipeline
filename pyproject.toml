@@ -1,0 +1,83 @@
+[tool.poetry]
+name = "vulnhunter"
+version = "0.1.0"
+description = "Badass Solidity Vulnerability Hunting Expert - Comprehensive smart contract security analysis pipeline"
+authors = ["BugWarden"]
+license = "MIT"
+readme = "README.md"
+packages = [{ include = "vulnhunter", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+web3 = "^6.11.3"
+requests = "^2.31.0"
+aiohttp = "^3.9.1"
+pydantic = "^2.5.2"
+pydantic-settings = "^2.1.0"
+click = "^8.1.7"
+rich = "^13.7.0"
+structlog = "^23.2.0"
+py-solc-x = "^2.0.2"
+networkx = "^3.2.1"
+pandas = "^2.2.0"
+numpy = "^2.0.0"
+asyncio-throttle = "^1.0.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+pytest-asyncio = "^0.21.1"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.12.0"
+black = "^23.12.0"
+isort = "^5.13.2"
+mypy = "^1.7.1"
+pylint = "^3.0.3"
+bandit = "^1.7.5"
+pre-commit = "^3.5.0"
+py-spy = "^0.3.14"
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "^7.2.6"
+sphinx-autodoc-typehints = "^1.25.2"
+sphinx-rtd-theme = "^2.0.0"
+
+[tool.poetry.scripts]
+vulnhunt = "vulnhunter.cli.main:cli"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py312']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pylint.messages_control]
+max-line-length = 100
+disable = ["C0330", "C0326"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "--strict-markers --cov=vulnhunter --cov-report=term-missing"
+testpaths = ["tests"]
+asyncio_mode = "auto"

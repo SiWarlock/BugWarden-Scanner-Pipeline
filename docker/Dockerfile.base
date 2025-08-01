@@ -1,0 +1,71 @@
+# VulnHunter Base Image
+# Provides multiple Solidity compiler versions and common dependencies
+FROM python:3.12-slim-bookworm
+
+LABEL maintainer="vulnhunter" \
+      description="Base image for Solidity security analysis tools" \
+      version="1.0.0"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    wget \
+    ca-certificates \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install solc-select for managing Solidity compiler versions
+RUN pip install --no-cache-dir solc-select
+
+# Create non-root user for security first
+RUN useradd -m -u 1000 vulnhunter
+
+# Install multiple Solidity compiler versions as the user
+USER vulnhunter
+RUN echo "Installing Solidity compilers..." && \
+    solc-select install 0.4.26 && \
+    solc-select install 0.5.17 && \
+    solc-select install 0.6.12 && \
+    solc-select install 0.7.6 && \
+    solc-select install 0.8.19 && \
+    solc-select install 0.8.24 && \
+    solc-select use 0.8.19  # Set default
+
+# Switch back to root for remaining setup
+USER root
+
+# Create required directories with proper permissions
+RUN mkdir -p \
+    /contracts \
+    /results \
+    /tmp/crytic-export \
+    /tmp/echidna_corpus \
+    /workspace && \
+    chmod -R 777 /tmp/crytic-export /tmp/echidna_corpus
+
+# Add common Python dependencies that most tools need
+RUN pip install --no-cache-dir \
+    requests \
+    pyyaml \
+    click \
+    rich
+
+# Set ownership of directories
+RUN chown -R vulnhunter:vulnhunter /contracts /results /workspace
+
+# Copy utility scripts
+COPY docker/scripts/*.py /usr/local/bin/
+RUN chmod +x /usr/local/bin/*.py
+
+# Set working directory
+WORKDIR /contracts
+
+# Switch to non-root user
+USER vulnhunter
+
+# Verify installation
+RUN echo "=== VulnHunter Base Image Ready ===" && \
+    python --version && \
+    solc-select versions && \
+    echo "Available compilers installed successfully"

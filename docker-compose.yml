@@ -1,0 +1,114 @@
+services:
+  # Slither - Static analysis
+  slither:
+    image: trailofbits/eth-security-toolbox:latest
+    container_name: vulnhunter-slither
+    volumes:
+      - ./contracts:/contracts:ro
+      - ./results:/results
+    working_dir: /contracts
+    network_mode: bridge
+    mem_limit: 4g
+    environment:
+      - SOLC_VERSION=${SOLC_VERSION:-0.8.19}
+    command: tail -f /dev/null # Keep container running
+
+  # Mythril - Symbolic execution and analysis
+  mythril:
+    image: mythril/myth:latest
+    container_name: vulnhunter-mythril
+    volumes:
+      - ./contracts:/contracts:ro
+      - ./results:/results
+    working_dir: /contracts
+    network_mode: bridge
+    mem_limit: 8g
+    command: tail -f /dev/null
+
+  # Echidna - Property-based fuzzer
+  echidna:
+    image: trailofbits/echidna:latest
+    container_name: vulnhunter-echidna
+    volumes:
+      - ./contracts:/contracts:ro
+      - ./results:/results
+    working_dir: /contracts
+    network_mode: bridge
+    mem_limit: 4g
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: tail -f /dev/null
+
+  # Manticore - Symbolic execution
+  manticore:
+    image: trailofbits/manticore:latest
+    container_name: vulnhunter-manticore
+    volumes:
+      - ./contracts:/contracts:ro
+      - ./results:/results
+    working_dir: /contracts
+    network_mode: bridge
+    mem_limit: 16g
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: tail -f /dev/null
+
+  # Foundry - Testing and fuzzing framework
+  foundry:
+    image: ghcr.io/foundry-rs/foundry:latest
+    container_name: vulnhunter-foundry
+    volumes:
+      - ./contracts:/contracts
+      - ./results:/results
+      - ./test:/test
+    working_dir: /contracts
+    network_mode: bridge
+    mem_limit: 4g
+    environment:
+      - FOUNDRY_PROFILE=default
+      - ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
+    command: tail -f /dev/null
+
+  # Halmos - Symbolic testing
+  halmos:
+    build:
+      context: ./docker/halmos
+      dockerfile: Dockerfile
+    container_name: vulnhunter-halmos
+    volumes:
+      - ./contracts:/contracts:ro
+      - ./results:/results
+    working_dir: /contracts
+    network_mode: bridge
+    mem_limit: 4g
+    command: tail -f /dev/null
+
+  # Anvil - Local Ethereum node for exploit simulation
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    container_name: vulnhunter-anvil
+    ports:
+      - "8545:8545"
+    network_mode: bridge
+    command:
+      ["anvil", "--host", "0.0.0.0", "--accounts", "10", "--block-time", "1"]
+
+networks:
+  default:
+    name: vulnhunter_net
+    driver: bridge
+
+volumes:
+  contracts:
+  results:
+  test:

@@ -1,0 +1,28 @@
+# VulnHunter Mythril Image
+# Symbolic execution tool for Ethereum smart contracts
+FROM vulnhunter-base:latest
+
+LABEL maintainer="vulnhunter" \
+      description="Mythril symbolic execution tool for Solidity" \
+      version="1.0.0"
+
+USER root
+
+# Install Mythril and its dependencies
+RUN pip install --no-cache-dir mythril
+
+# Copy Mythril wrapper script
+COPY docker/wrappers/mythril-wrapper.py /usr/local/bin/
+RUN chmod +x /usr/local/bin/mythril-wrapper.py
+
+# Switch back to non-root user
+USER vulnhunter
+
+# Set working directory
+WORKDIR /contracts
+
+# Health check
+RUN echo "=== VulnHunter Mythril Ready ===" && \
+    myth version
+
+# No default entrypoint - let DockerToolWrapper handle command execution

@@ -1,0 +1,36 @@
+# VulnHunter Mythril Image (Fast Build)
+# Uses pre-built Mythril image to avoid z3 compilation
+FROM mythril/myth:latest
+
+LABEL maintainer="vulnhunter" \
+      description="Mythril symbolic execution tool for Solidity" \
+      version="1.0.0"
+
+USER root
+
+# Install Python and required tools to match our base image
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy utility scripts from base image
+COPY docker/scripts/*.py /usr/local/bin/
+RUN chmod +x /usr/local/bin/*.py
+
+# Copy Mythril wrapper script
+COPY docker/wrappers/mythril-wrapper.py /usr/local/bin/
+RUN chmod +x /usr/local/bin/mythril-wrapper.py
+
+# Create directories
+RUN mkdir -p /contracts /results /workspace && \
+    chmod 777 /contracts /results /workspace
+
+# Set working directory
+WORKDIR /contracts
+
+# Health check
+RUN echo "=== VulnHunter Mythril Ready ===" && \
+    myth version
+
+# No default entrypoint - let DockerToolWrapper handle command execution

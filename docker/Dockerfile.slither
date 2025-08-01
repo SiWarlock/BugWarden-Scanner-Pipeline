@@ -1,0 +1,28 @@
+# VulnHunter Slither Image
+# Static analysis tool for Solidity smart contracts
+FROM vulnhunter-base:latest
+
+LABEL maintainer="vulnhunter" \
+      description="Slither static analysis tool for Solidity" \
+      version="1.0.0"
+
+USER root
+
+# Install Slither
+RUN pip install --no-cache-dir slither-analyzer
+
+# Copy Slither wrapper script
+COPY docker/wrappers/slither-wrapper.py /usr/local/bin/
+RUN chmod +x /usr/local/bin/slither-wrapper.py
+
+# Switch back to non-root user
+USER vulnhunter
+
+# Set working directory
+WORKDIR /contracts
+
+# Health check
+RUN echo "=== VulnHunter Slither Ready ===" && \
+    slither --version
+
+# No default entrypoint - let DockerToolWrapper handle command execution

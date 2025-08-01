@@ -1,0 +1,37 @@
+# VulnHunter Echidna Image
+# Property-based fuzzing tool for Ethereum smart contracts
+FROM vulnhunter-base:latest
+
+LABEL maintainer="vulnhunter" \
+      description="Echidna property-based fuzzing tool for Solidity" \
+      version="1.0.0"
+
+USER root
+
+# Copy Echidna binary from official Docker image
+# This avoids download issues and uses the official build
+COPY --from=ghcr.io/crytic/echidna/echidna:latest /usr/local/bin/echidna /usr/local/bin/echidna-test
+RUN chmod +x /usr/local/bin/echidna-test
+
+# Install crytic-compile which is required by Echidna
+RUN pip install --no-cache-dir crytic-compile
+
+# Copy Echidna wrapper script
+COPY docker/wrappers/echidna-wrapper.py /usr/local/bin/
+RUN chmod +x /usr/local/bin/echidna-wrapper.py
+
+# Create writable directories for Echidna
+RUN mkdir -p /tmp/echidna_corpus /tmp/echidna_output && \
+    chmod 777 /tmp/echidna_corpus /tmp/echidna_output
+
+# Switch back to non-root user
+USER vulnhunter
+
+# Set working directory
+WORKDIR /contracts
+
+# Health check - verify Echidna is available
+RUN echo "=== VulnHunter Echidna Ready ===" && \
+    echidna-test --version
+
+# No default entrypoint - let DockerToolWrapper handle command execution
